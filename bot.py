@@ -4,6 +4,8 @@ import pandas as pd
 import discord
 import responses
 import random
+import os
+from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -19,6 +21,7 @@ mediumQuestionNameList = []
 mediumQuestionUrlList = []
 hardQuestionNameList = []
 hardQuestionUrlList = []
+load_dotenv()
 
 # Stores the collected data in pandas
 def storeData():
@@ -213,6 +216,9 @@ def randomHard():
     else:
         return 'All Hard Leetcode Questions Have been complete'
 
+def dailyLeetcode():
+    return
+
 # Responds to the user
 async def sendMessage(message, user_message):
     try:
@@ -223,7 +229,7 @@ async def sendMessage(message, user_message):
 
 # Function which is called continousily while the bot is active
 def runDiscordBot():
-    TOKEN = 'MTA0NDUwMzQwNjEzNzU4OTgxMQ.G7ublE.YJu_ZzoxGNdvY-qA3yLNApJKNVhNHhOufWKuP4'
+    TOKEN = os.getenv("TOKEN")
     intents = discord.Intents.all()
     client = discord.Client(command_prefix='!', intents=intents)
     
