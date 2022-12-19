@@ -1,6 +1,9 @@
-# Importing the requires libraries for webscrapping
+# Importing the requires libraries for webscrapping and discord
 import time
 import pandas as pd
+import discord
+import responses
+import random
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -16,9 +19,6 @@ mediumQuestionNameList = []
 mediumQuestionUrlList = []
 hardQuestionNameList = []
 hardQuestionUrlList = []
-generalQuestionNameList = []
-generalQuestionUrlList = []
-generalQuestionDifficultyList = []
 
 # Stores the collected data in pandas
 def storeData():
@@ -42,18 +42,13 @@ def storeData():
         'Status': False
     }
 
-    general = {
-        'Name': generalQuestionNameList,
-        'URL': generalQuestionUrlList,
-        'Difficulty': generalQuestionDifficultyList,
-        'Status': False
-    }
-
     # Creating the pandas for easy access to questions
+    global easyPanda
     easyPanda = pd.DataFrame(easy)
+    global mediumPanda
     mediumPanda = pd.DataFrame(medium)
+    global hardPanda 
     hardPanda = pd.DataFrame(hard)
-    generalPanda = pd.DataFrame(general)
 
 # Opens a headless browser in chrome
 def openBrowser(url):
@@ -112,21 +107,12 @@ def fetchPageData(pageUrl):
             if questionDifficulty == 'Easy':
                 easyQuestionNameList.append(questionName)
                 easyQuestionUrlList.append(questionUrl)
-                generalQuestionNameList.append(questionName)
-                generalQuestionUrlList.append(questionUrl)
-                generalQuestionDifficultyList.append(questionDifficulty)
             elif questionDifficulty == 'Medium':
                 mediumQuestionNameList.append(questionName)
                 mediumQuestionUrlList.append(questionUrl)
-                generalQuestionNameList.append(questionName)
-                generalQuestionUrlList.append(questionUrl)
-                generalQuestionDifficultyList.append(questionDifficulty)
             else:
                 hardQuestionNameList.append(questionName)
                 hardQuestionUrlList.append(questionUrl)
-                generalQuestionNameList.append(questionName)
-                generalQuestionUrlList.append(questionUrl)
-                generalQuestionDifficultyList.append(questionDifficulty)
         print("     -----------> Done")
         closeBrowser(browser)
 
@@ -155,7 +141,7 @@ def getData():
         if (browser.title == "Problems - LeetCode"):
 
             # print(f"Total {totalQuestion} questions available")
-            totalPage = 5
+            totalPage = 3
             print(f"Total {totalPage} pages available")
             closeBrowser(browser)
 
@@ -168,7 +154,6 @@ def getData():
                 fetchPageData(pageUrl)
 
             print("     -----------> Done all pages ")
-            print(f"Total {generalQuestionNameList.__len__()} questions fetched")
             storeData()
 
         # Error Handling
@@ -180,4 +165,87 @@ def getData():
         print("Some error occured, error: ", e)
         return
 
-getData()
+# Generates a random easy question
+def randomEasy():
+    index  = random.randint(0, len(easyQuestionNameList) - 1)
+
+    if False in easyPanda.values:
+        while easyPanda.at[index, 'Status'] == True:
+            index  = random.randint(0, len(easyQuestionNameList) - 1)
+        
+        name = easyPanda.at[index, 'Name']
+        url = easyPanda.at[index, 'URL']
+        easyPanda.iloc[index].replace(to_replace=False, value = True)
+
+        return str(name) + ': ' + url
+    else:
+        return 'All Easy Leetcode Questions Have been complete'
+
+# Generates a random medium question
+def randomMedium():
+    index  = random.randint(0, len(mediumQuestionNameList) - 1)
+
+    if False in mediumPanda.values:
+        while mediumPanda.at[index, 'Status'] == True:
+            index  = random.randint(0, len(mediumQuestionNameList) - 1)
+        
+        name = mediumPanda.at[index, 'Name']
+        url = mediumPanda.at[index, 'URL']
+        mediumPanda.iloc[index].replace(to_replace=False, value = True)
+
+        return str(name) + ': ' + url
+    else:
+        return 'All Medium Leetcode Questions Have been complete'
+
+# Generates a random hard question    
+def randomHard():
+    index  = random.randint(0, len(hardQuestionNameList) - 1)
+
+    if False in hardPanda.values:
+        while hardPanda.at[index, 'Status'] == True:
+            index  = random.randint(0, len(hardQuestionNameList) - 1)
+        
+        name = hardPanda.at[index, 'Name']
+        url = hardPanda.at[index, 'URL']
+        hardPanda.iloc[index].replace(to_replace=False, value = True)
+
+        return str(name) + ': ' + str(url)
+    else:
+        return 'All Hard Leetcode Questions Have been complete'
+
+# Responds to the user
+async def sendMessage(message, user_message):
+    try:
+        response = responses.handle_response(user_message)
+        await message.channel.send(response)
+    except Exception as e:
+        print(e)
+
+# Function which is called continousily while the bot is active
+def runDiscordBot():
+    TOKEN = 'MTA0NDUwMzQwNjEzNzU4OTgxMQ.G7ublE.YJu_ZzoxGNdvY-qA3yLNApJKNVhNHhOufWKuP4'
+    intents = discord.Intents.all()
+    client = discord.Client(command_prefix='!', intents=intents)
+    
+    @client.event
+    async def on_ready():
+        print('We have logged in as {0.user}'.format(client))
+
+    @client.event
+    async def on_message(message):
+        if message.author == client.user:
+            return
+        
+        username = str(message.author)
+        userMessage = str(message.content)
+        channel = str(message.channel)
+
+        print(f"{username} said: '{userMessage}' ({channel})")
+
+        if userMessage[0] == '!':
+            userMessage = userMessage[1:]
+            await sendMessage(message, userMessage)
+
+    client.run(TOKEN)
+
+
