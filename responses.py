@@ -13,7 +13,5 @@ def handle_response(message) -> str:
     elif p_message == 'help':
         response = ("These are my functions:\n\n!random-easy: I can pick a random easy problem for you\n\n!random-medium: I can pick a random medium problem for you\n\n!random-hard: I can pick a random hard problem for you\n\nI will also send out 3 daily leetcode problems at 12:00 EST everyday")
         return response
-    elif p_message == 'daily':
-        return bot.dailyLeetcode(0)
     else:
         return "I didn't quite catch that. If you need help remembering what I can do, type !help"

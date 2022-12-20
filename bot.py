@@ -25,6 +25,7 @@ mediumQuestionUrlList = []
 hardQuestionNameList = []
 hardQuestionUrlList = []
 
+# Creating variables to run the bot and its various functions
 global currentNum
 currentNum = 0
 load_dotenv()
@@ -150,7 +151,7 @@ def getData():
         if (browser.title == "Problems - LeetCode"):
 
             # print(f"Total {totalQuestion} questions available")
-            totalPage = 2
+            totalPage = 50
             print(f"Total {totalPage} pages available")
             closeBrowser(browser)
 
@@ -224,8 +225,10 @@ def randomHard():
 
 # Returns a question of easy difficulty
 def dailyLeetcode(index):
+    # Check if the index is in range
     if (index + 1) in range(len(hardQuestionNameList)):
         
+        # Create variables for eahc question type to return
         easyName = easyPanda.at[index, 'Name']
         easyUrl = easyPanda.at[index, 'URL']
         mediumName = mediumPanda.at[index, 'Name']
@@ -233,10 +236,13 @@ def dailyLeetcode(index):
         hardName = hardPanda.at[index, 'Name']
         hardUrl = hardPanda.at[index, 'URL']
 
+        # Increase the index by 1
         currentNum = index + 1
 
+        # Return the leetcode of the day
         return '\u0332'.join('LEETCODE OF THE DAY:') + '\n\nEasy - ' + str(easyName) + ': ' + str(easyUrl) + '\n\nMedium - ' + str(mediumName) + ': ' + str(mediumUrl) + '\n\nHard - ' + str(hardName) + ': ' + str(mediumUrl)
     else:
+        # If all indexes have been exausted
         return 'All Questions have been completed' 
 
 # Responds to the user
@@ -250,38 +256,61 @@ async def sendMessage(message, user_message):
 
 # Function which is called continousily while the bot is active
 def runDiscordBot():
+    # Initializing the variables for the bot
     TOKEN = os.getenv("TOKEN")
     intents = discord.Intents.all()
+    intents.guilds = True
     client = discord.Client(command_prefix='!', intents=intents)
     bot = commands.Bot(command_prefix='!', intents=intents)
     time = datetime.time(23, 55)
 
+    # Calls dailyLeetcode function once a day at 12:00 EST
     async def daily():
+        # Keeps the loop running endlessly
         while True:
-            await asyncio.sleep(10)
-            channel = bot.get_channel('920108137313349645')
-            print(channel)
-            
+            # Calculating wait-time
+            now = datetime.datetime.now()
+            then = now + datetime.timedelta(days=1)
+            then.replace(hour=12, minute=0, second=0)
+            wait_time = (then - now).total_seconds()
 
+            # Waiting the required amount the calling the desired function at the correct time
+            await asyncio.sleep(wait_time)
+            await channel.send(dailyLeetcode(currentNum))
+            
+    # Gets called when the bot is ready
     @client.event
     async def on_ready():
+        # For testing, lets us know the bot is running
         print('We have logged in as {0.user}'.format(client))
+
+        # Storing the channel id in a global variable
+        global channel
+        channel = client.get_channel(920108137313349645)
+
+        # Calls the loop
         await daily()
 
+    # Responds to the user's message
     @client.event
     async def on_message(message):
+        # If the bot says something, do not respond
         if message.author == client.user:
             return
         
+        # Store important information in variables
         username = str(message.author)
         userMessage = str(message.content)
         channel = str(message.channel)
 
+        # For testing, prints chat history
         print(f"{username} said: '{userMessage}' ({channel})")
 
+        # If the message starts with a '!' then it is probably a command, try to respond to the message
         if userMessage[0] == '!':
             userMessage = userMessage[1:]
             await sendMessage(message, userMessage)
 
+    # Run the bot
     client.run(TOKEN)
 
