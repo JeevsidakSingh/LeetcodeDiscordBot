@@ -5,6 +5,9 @@ import discord
 import responses
 import random
 import os
+import datetime
+import asyncio
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -21,6 +24,9 @@ mediumQuestionNameList = []
 mediumQuestionUrlList = []
 hardQuestionNameList = []
 hardQuestionUrlList = []
+
+global currentNum
+currentNum = 0
 load_dotenv()
 
 # Stores the collected data in pandas
@@ -144,7 +150,7 @@ def getData():
         if (browser.title == "Problems - LeetCode"):
 
             # print(f"Total {totalQuestion} questions available")
-            totalPage = 3
+            totalPage = 2
             print(f"Total {totalPage} pages available")
             closeBrowser(browser)
 
@@ -216,13 +222,28 @@ def randomHard():
     else:
         return 'All Hard Leetcode Questions Have been complete'
 
-def dailyLeetcode():
-    return
+# Returns a question of easy difficulty
+def dailyLeetcode(index):
+    if (index + 1) in range(len(hardQuestionNameList)):
+        
+        easyName = easyPanda.at[index, 'Name']
+        easyUrl = easyPanda.at[index, 'URL']
+        mediumName = mediumPanda.at[index, 'Name']
+        mediumUrl = mediumPanda.at[index, 'URL']
+        hardName = hardPanda.at[index, 'Name']
+        hardUrl = hardPanda.at[index, 'URL']
+
+        currentNum = index + 1
+
+        return '\u0332'.join('LEETCODE OF THE DAY:') + '\n\nEasy - ' + str(easyName) + ': ' + str(easyUrl) + '\n\nMedium - ' + str(mediumName) + ': ' + str(mediumUrl) + '\n\nHard - ' + str(hardName) + ': ' + str(mediumUrl)
+    else:
+        return 'All Questions have been completed' 
 
 # Responds to the user
 async def sendMessage(message, user_message):
     try:
         response = responses.handle_response(user_message)
+        print(message.channel)
         await message.channel.send(response)
     except Exception as e:
         print(e)
@@ -232,10 +253,20 @@ def runDiscordBot():
     TOKEN = os.getenv("TOKEN")
     intents = discord.Intents.all()
     client = discord.Client(command_prefix='!', intents=intents)
-    
+    bot = commands.Bot(command_prefix='!', intents=intents)
+    time = datetime.time(23, 55)
+
+    async def daily():
+        while True:
+            await asyncio.sleep(10)
+            channel = bot.get_channel('920108137313349645')
+            print(channel)
+            
+
     @client.event
     async def on_ready():
         print('We have logged in as {0.user}'.format(client))
+        await daily()
 
     @client.event
     async def on_message(message):
@@ -253,5 +284,4 @@ def runDiscordBot():
             await sendMessage(message, userMessage)
 
     client.run(TOKEN)
-
 
